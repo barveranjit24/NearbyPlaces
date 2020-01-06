@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">AssignmentNearbyRestaurants</string>
+    <string name="title_activity_maps">AssignmentNearbyRestaurants</string>
+    <string name="open">Open</string>
+    <string name="closed">Closed</string>
+    <string name="restaurants_not_found">Restaurants not found</string>
+    <string name="you_are_offline">You are Offline</string>
+    <string name="loading_offline_data">Loading offline data</string>
+    <string name="you_are_here">You are here</string>
+    <string name="permission_denied">Permission Denied</string>
+    <string name="no_photos_found">No photos found</string>
+</resources>
