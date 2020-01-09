@@ -1,5 +1,7 @@
 package com.example.nearbyplaces.model
 
-class OpeningHours {
+import java.io.Serializable
+
+class OpeningHours : Serializable {
     var open_now:Boolean=false
 }

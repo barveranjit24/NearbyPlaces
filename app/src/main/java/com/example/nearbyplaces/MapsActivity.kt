@@ -14,8 +14,6 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.nearbyplaces.adapter.RestaurantAdapter
-import com.example.nearbyplaces.remote.RestApi
-import com.example.nearbyplaces.remote.RetrofitClient
 import com.example.nearbyplaces.util.Constants.Companion.MY_PERMISSION_CODE
 import com.example.nearbyplaces.util.Util
 import com.example.nearbyplaces.util.Util.Companion.getUrl
@@ -30,7 +28,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.activity_maps.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -38,6 +35,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var mLastLocation: Location
     private var mMarker: Marker?=null
+
     //Location
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     lateinit var locationRequest: LocationRequest
@@ -82,6 +80,51 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         fusedLocationProviderClient.requestLocationUpdates(locationRequest,locationCallback, Looper.myLooper())
+    }
+
+    private fun buildLocationRequest() {
+        locationRequest = LocationRequest()
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.interval = 500000
+        locationRequest.fastestInterval = 300000
+        locationRequest.smallestDisplacement = 10f
+    }
+
+    private fun buildLocationCallback() {
+        locationCallback = object : LocationCallback(){
+            override fun onLocationResult(p0: LocationResult?) {
+                mLastLocation = p0!!.locations.get(p0!!.locations.size-1) //Get last location
+
+                if (mMarker!=null){
+                    mMarker!!.remove()
+                }
+
+                latitude = mLastLocation.latitude
+                longitude = mLastLocation.longitude
+
+                val latLng = LatLng(latitude,longitude)
+                val  markerOptions = MarkerOptions()
+                    .position(latLng)
+                    .title(getString(R.string.you_are_here))
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+
+                mMarker = mMap!!.addMarker(markerOptions)
+
+                //Move Camera
+                mMap!!.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+                mMap!!.animateCamera(CameraUpdateFactory.zoomTo(12f))
+
+                val url = getUrl(latitude,longitude)
+
+                if (Util.isOnline(this@MapsActivity)){
+                    viewModel.fetchData(url)
+                }else{
+                    Toast.makeText(this@MapsActivity,this@MapsActivity.getString(R.string.you_are_offline),Toast.LENGTH_SHORT).show()
+                    viewModel.fetchFromDatabase()
+                }
+
+            }
+        }
     }
 
     fun observeViewModel() {
@@ -143,51 +186,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         })
     }
 
-    private fun buildLocationCallback() {
-        locationCallback = object : LocationCallback(){
-            override fun onLocationResult(p0: LocationResult?) {
-                mLastLocation = p0!!.locations.get(p0!!.locations.size-1) //Get last location
-
-                if (mMarker!=null){
-                    mMarker!!.remove()
-                }
-
-                latitude = mLastLocation.latitude
-                longitude = mLastLocation.longitude
-
-                val latLng = LatLng(latitude,longitude)
-                val  markerOptions = MarkerOptions()
-                    .position(latLng)
-                    .title(getString(R.string.you_are_here))
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-
-                mMarker = mMap!!.addMarker(markerOptions)
-
-                //Move Camera
-                mMap!!.moveCamera(CameraUpdateFactory.newLatLng(latLng))
-                mMap!!.animateCamera(CameraUpdateFactory.zoomTo(12f))
-
-                val url = getUrl(latitude,longitude)
-
-                if (Util.isOnline(this@MapsActivity)){
-                    viewModel.fetchData(url)
-                }else{
-                    Toast.makeText(this@MapsActivity,this@MapsActivity.getString(R.string.you_are_offline),Toast.LENGTH_SHORT).show()
-                    viewModel.fetchFromDatabase()
-                }
-
-            }
-        }
-    }
-
-    private fun buildLocationRequest() {
-        locationRequest = LocationRequest()
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = 500000
-        locationRequest.fastestInterval = 300000
-        locationRequest.smallestDisplacement = 10f
-    }
-
     private fun checkLocationPermission(): Boolean {
         if (ContextCompat.checkSelfPermission(this,android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
@@ -241,7 +239,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onStop() {
         try{
             fusedLocationProviderClient.removeLocationUpdates(locationCallback)
-        }catch (e:Exception){
+        }catch (e: Exception){
             e.printStackTrace()
         }
         super.onStop()

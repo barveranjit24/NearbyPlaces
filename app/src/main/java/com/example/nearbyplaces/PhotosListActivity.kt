@@ -5,28 +5,28 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.nearbyplaces.adapter.PhotosAdapter
-import com.example.nearbyplaces.model.PhotoList
-import com.example.nearbyplaces.util.Constants
+import com.example.nearbyplaces.model.Photos
+import com.example.nearbyplaces.model.Restaurants
+import com.example.nearbyplaces.util.Constants.Companion.INTENT_PARAM_PHOTOS
 import kotlinx.android.synthetic.main.activity_photos_list.*
-import kotlin.collections.ArrayList
 
 
 class PhotosListActivity : AppCompatActivity() {
 
-    var photoList: List<PhotoList> = ArrayList<PhotoList>()
+    var photoList: List<Photos> = ArrayList<Photos>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photos_list)
 
         val extras = intent.extras
         if (extras != null) {
-            photoList = extras.getParcelableArrayList<PhotoList>(Constants.INTENT_PARAM_PHOTOS)!!
+            var restaurant: Restaurants = extras.getSerializable(INTENT_PARAM_PHOTOS) as Restaurants
+            photoList = restaurant.photos?.toList() ?: photoList
         }
             initView()
     }
 
     private fun initView() {
-
         //===========View======================
         if (photoList!=null && photoList!!.size>0){
             photoError.visibility = View.GONE
@@ -42,6 +42,5 @@ class PhotosListActivity : AppCompatActivity() {
         }
 
         ivBack.setOnClickListener { finish() }
-
     }
 }

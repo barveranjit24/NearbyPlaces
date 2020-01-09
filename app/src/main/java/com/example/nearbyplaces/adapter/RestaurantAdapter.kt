@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -12,15 +13,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.nearbyplaces.PhotosListActivity
 import com.example.nearbyplaces.R
-import com.example.nearbyplaces.model.PhotoList
 import com.example.nearbyplaces.model.Photos
 import com.example.nearbyplaces.model.Restaurants
 import com.example.nearbyplaces.util.Constants.Companion.INTENT_PARAM_PHOTOS
 import com.example.nearbyplaces.util.Util
-
+import kotlinx.android.synthetic.main.item_restaurant.view.*
 
 class RestaurantAdapter(internal var context: Context, internal var restaurantList:List<Restaurants>)
-    : RecyclerView.Adapter<RestaurantViewHolder>() {
+    : RecyclerView.Adapter<RestaurantAdapter.RestaurantViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RestaurantViewHolder {
         val itemView = LayoutInflater.from(parent.context)
@@ -34,82 +34,81 @@ class RestaurantAdapter(internal var context: Context, internal var restaurantLi
 
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
     override fun onBindViewHolder(holder: RestaurantViewHolder, position: Int) {
-
         val restaurant: Restaurants = restaurantList[position]
-        var isOpen = restaurant.opening_hours?.open_now ?: false
+        holder.bindPhoto(restaurant)
+    }
 
-        holder.txtName.text = restaurant.name.toString()
-        holder.txtLocation.text = restaurant.vicinity.toString()
-        holder.txtRating.text = restaurant.rating.toString()
+    class RestaurantViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView),
+        View.OnClickListener {
 
-        if (restaurant.rating >= 3) {
-            holder.txtRating.setBackground(
-                ContextCompat.getDrawable(
-                    context,
-                    R.drawable.ic_rating_background_green
-                )
-            )
-        } else if (restaurant.rating >= 2) {
-            holder.txtRating.setBackground(
-                ContextCompat.getDrawable(
-                    context,
-                    R.drawable.ic_rating_background_yellow
-                )
-            )
-        } else {
-            holder.txtRating.setBackground(
-                ContextCompat.getDrawable(
-                    context,
-                    R.drawable.ic_rating_background_red
-                )
-            )
+        private var restaurant: Restaurants? = null
+
+        init {
+            itemView.ivIcon.setOnClickListener(this)
         }
 
-        if (isOpen) {
-            holder.txtOpeningHours.setTextColor(ContextCompat.getColor(context, R.color.green))
-            holder.txtOpeningHours.text = context.getString(R.string.open)
-        } else {
-            holder.txtOpeningHours.setTextColor(ContextCompat.getColor(context, R.color.red))
-            holder.txtOpeningHours.text = context.getString(R.string.closed)
-        }
+        fun bindPhoto(restaurant: Restaurants) {
+            this.restaurant = restaurant
 
-         Glide.with(context)
+            var isOpen = restaurant.opening_hours?.open_now ?: false
+
+            itemView.tvName.text = restaurant.name.toString()
+            itemView.tvLocation.text = restaurant.vicinity.toString()
+            itemView.tvRating.text = restaurant.rating.toString()
+
+            if (restaurant.rating >= 3) {
+                itemView.tvRating.setBackground(ContextCompat.getDrawable(
+                        itemView.context,
+                        R.drawable.ic_rating_background_green
+                    )
+                )
+            } else if (restaurant.rating >= 2) {
+                itemView.tvRating.setBackground(
+                    ContextCompat.getDrawable(
+                        itemView.context,
+                        R.drawable.ic_rating_background_yellow
+                    )
+                )
+            } else {
+                itemView.tvRating.setBackground(
+                    ContextCompat.getDrawable(
+                        itemView.context,
+                        R.drawable.ic_rating_background_red
+                    )
+                )
+            }
+
+            if (isOpen) {
+                itemView.tvOpeningHour.setTextColor(ContextCompat.getColor(itemView.context, R.color.green))
+                itemView.tvOpeningHour.text = itemView.context.getString(R.string.open)
+            } else {
+                itemView.tvOpeningHour.setTextColor(ContextCompat.getColor(itemView.context, R.color.red))
+                itemView.tvOpeningHour.text = itemView.context.getString(R.string.closed)
+            }
+
+            Glide.with(itemView.context)
                 .load(restaurant.icon.toString())
                 .placeholder(R.drawable.ic_restaurant) //placeholder
                 .error(R.drawable.ic_restaurant) //error
-                .into(holder.ivIcon);
+                .into(itemView.ivIcon);
+        }
 
-
-        holder.ivIcon!!.setOnClickListener {
-
-            if (Util.isOnline(context)){
-                var photosList: List<Photos> = restaurant.photos?.toList() ?: emptyList()
+        override fun onClick(v: View?) {
+            if (Util.isOnline(itemView.context)){
+                val photosList: List<Photos> = restaurant?.photos?.toList() ?: emptyList()
                 if (photosList==null || photosList.size<=0){
-                    Toast.makeText(context,context.getString(R.string.no_photos_found),Toast.LENGTH_SHORT).show()
+                    Toast.makeText(itemView.context,itemView.context.getString(R.string.no_photos_found),Toast.LENGTH_SHORT).show()
                 }else{
-                    var list: ArrayList<PhotoList> = ArrayList<PhotoList>()
-                    try{
-                            for (i in 0 until photosList.size) {
-                                var photoList = PhotoList()
-                                photoList.height = photosList[i].height
-                                photoList.photo_reference = photosList[i].photo_reference
-                                photoList.width = photosList[i].width
-                                list.add(photoList)
-
-                            }
-                        }catch (e:Exception){
-                                e.printStackTrace()
-                        }
-                    val intent = Intent(context, PhotosListActivity::class.java).apply {
-                                                putParcelableArrayListExtra(INTENT_PARAM_PHOTOS,list)
-
-                    }
-                    context.startActivity(intent)
+                        val context = itemView.context
+                        val showPhotoIntent = Intent(context, PhotosListActivity::class.java)
+                        showPhotoIntent.putExtra(INTENT_PARAM_PHOTOS,restaurant)
+                        context.startActivity(showPhotoIntent)
                 }
-
             }else{
-                Toast.makeText(context,context.getString(R.string.you_are_offline),Toast.LENGTH_SHORT).show()
+                Toast.makeText(itemView.context,itemView.context.getString(R.string.you_are_offline),Toast.LENGTH_SHORT).show()
             }
         }
+
     }
+
 }

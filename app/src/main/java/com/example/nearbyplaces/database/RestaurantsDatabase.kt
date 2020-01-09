@@ -5,10 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.nearbyplaces.model.Restaurants
+import com.example.nearbyplaces.util.Constants.Companion.DATABASE_NAME
 
 
 @Database(entities = [Restaurants::class], version = 1, exportSchema = false)
-//@TypeConverters(OpeningHourDataTypeConverter::class)
 abstract class RestaurantsDatabase: RoomDatabase() {
     abstract fun restaurantsDao(): RestaurantsDao
 
@@ -25,7 +25,7 @@ abstract class RestaurantsDatabase: RoomDatabase() {
         private fun buildDatabase(context: Context) = Room.databaseBuilder(
             context.applicationContext,
             RestaurantsDatabase::class.java,
-            "restaurantsdatabase"
+            DATABASE_NAME
         ).build()
     }
 }

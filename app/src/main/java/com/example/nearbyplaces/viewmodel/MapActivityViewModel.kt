@@ -20,8 +20,7 @@ class MapActivityViewModel (application: Application): BaseViewModel(application
     val restaurantsListLoadError = MutableLiveData<Boolean>()
     val loading = MutableLiveData<Boolean>()
 
-    val retrofit = RetrofitClient.instance
-    val jsonApi: RestApi = retrofit.create(RestApi::class.java)
+    val jsonApi: RestApi = RetrofitClient.instance
     private val myCompositeDisposable = CompositeDisposable()
 
     fun fetchData(url:String) {

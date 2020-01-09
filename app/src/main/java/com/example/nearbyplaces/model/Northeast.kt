@@ -1,6 +1,8 @@
 package com.example.nearbyplaces.model
 
-class Northeast {
+import java.io.Serializable
+
+class Northeast : Serializable {
 
     var lat:Double=0.0
     var lng:Double=0.0

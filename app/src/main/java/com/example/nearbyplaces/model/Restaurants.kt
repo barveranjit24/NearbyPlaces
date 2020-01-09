@@ -3,9 +3,10 @@ package com.example.nearbyplaces.model
 import androidx.annotation.NonNull
 import androidx.room.*
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 @Entity(tableName = "restaurants")
-class Restaurants {
+class Restaurants : Serializable {
 
     @NonNull
     @PrimaryKey(autoGenerate = true)

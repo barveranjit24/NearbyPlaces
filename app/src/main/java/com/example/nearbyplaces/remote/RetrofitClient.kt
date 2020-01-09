@@ -9,7 +9,7 @@ object RetrofitClient {
 
     private var ourInstance: Retrofit?=null
 
-    val instance:Retrofit
+    val instance: RestApi
     get() {
         if (ourInstance ==null){
             ourInstance = Retrofit.Builder()
@@ -18,8 +18,6 @@ object RetrofitClient {
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build()
         }
-        return ourInstance!!
+        return ourInstance!!.create(RestApi::class.java)
     }
-
-
 }
